@@ -27,7 +27,7 @@ interface Props {
 }
 
 export default class Board extends React.Component<Props, State> {
-    private cvs: Canvas;
+    private cvs: Canvas | null;
     private currentTilePos: Vector;
     private isHovering: boolean;
     private isDrawing: boolean;

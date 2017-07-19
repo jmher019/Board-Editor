@@ -24,7 +24,7 @@ interface Props {
 }
 
 export default class TileSetPanel extends React.Component<Props, State> {
-    private board: Board;
+    private board: Board | null;
 
     constructor(props: Props) {
         super(props);
