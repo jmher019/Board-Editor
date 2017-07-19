@@ -74,13 +74,15 @@ export default class Board extends React.Component<Props, State> {
     }
 
     public componentWillReceiveProps(next: Props) {
-        this.sizeInvalidated = this.cvs.props.width !== 
-            next.collection.getLayerWidth() * next.collection.getTilePixelWidth() ||
-            this.cvs.props.height !== next.collection.getLayerHeight() * next.collection.getTilePixelHeight() ||
-            this.props.collection !== next.collection ||
-            (next.gridEnabled !== undefined && this.props.gridEnabled !== next.gridEnabled) ||
-            this.props.collection.getNumberOfLayers() !== next.collection.getNumberOfLayers() ||
-            this.props.visibleLayers !== next.visibleLayers ? true : false;
+        if (this.cvs) {
+            this.sizeInvalidated = this.cvs.props.width !== 
+                next.collection.getLayerWidth() * next.collection.getTilePixelWidth() ||
+                this.cvs.props.height !== next.collection.getLayerHeight() * next.collection.getTilePixelHeight() ||
+                this.props.collection !== next.collection ||
+                (next.gridEnabled !== undefined && this.props.gridEnabled !== next.gridEnabled) ||
+                this.props.collection.getNumberOfLayers() !== next.collection.getNumberOfLayers() ||
+                this.props.visibleLayers !== next.visibleLayers ? true : false;
+        }
     }
 
     public componentDidUpdate() {
@@ -119,9 +121,11 @@ export default class Board extends React.Component<Props, State> {
         let currentTilePos = this.getTilePosFromCursor(e);
 
         if (this.currentTilePos && !this.currentTilePos.equals(currentTilePos)) {
-            this.cvs.draw(() => {
-                this.refreshCurrentTile('#666');
-            });
+            if (this.cvs) {
+                this.cvs.draw(() => {
+                    this.refreshCurrentTile('#666');
+                });
+            }
         }
         this.currentTilePos = currentTilePos;
         if (this.isDrawing && this.isHovering && !this.props.isSelecting && this.props.drawingTile) {
@@ -149,9 +153,11 @@ export default class Board extends React.Component<Props, State> {
         }
 
         if (this.props.isHighlighting) {
-            this.cvs.draw(() => {
-                this.refreshCurrentTile('#ff0');
-            });
+            if (this.cvs) {
+                this.cvs.draw(() => {
+                    this.refreshCurrentTile('#ff0');
+                });
+            }
         }
     }
 
@@ -161,17 +167,21 @@ export default class Board extends React.Component<Props, State> {
 
     public onMouseLeave(e: React.MouseEvent<HTMLCanvasElement>) {
         this.isHovering = false;
-        this.cvs.draw(() => {
-            this.refreshCurrentTile('#666');
-        });
+        if (this.cvs) {
+            this.cvs.draw(() => {
+                this.refreshCurrentTile('#666');
+            });
+        }
     }
 
     public onMouseEnter(e: React.MouseEvent<HTMLCanvasElement>) {
         this.isHovering = true;
         if (this.props.isHighlighting) {
-            this.cvs.draw(() => {
-                this.refreshCurrentTile('#ff0');
-            });
+            if (this.cvs) {
+                this.cvs.draw(() => {
+                    this.refreshCurrentTile('#ff0');
+                });
+            }
         }
     }
 
@@ -180,30 +190,39 @@ export default class Board extends React.Component<Props, State> {
         if (layer) {
             layer.setTile(x, y, tile);
             this.currentTilePos = new Vector(x, y);
-            this.cvs.draw(() => {
-                this.refreshTile(x, y, '#666');
-            });
+            if (this.cvs) {
+                this.cvs.draw(() => {
+                    this.refreshTile(x, y, '#666');
+                });
+            }
         }
     }
 
     private getTilePosFromCursor(e: React.MouseEvent<HTMLCanvasElement>): Vector {
-        let rect = this.cvs.getCanvas().getBoundingClientRect();
-        let cvsPos = new Vector(rect.left, rect.top);
-        let pos = (new Vector(e.clientX, e.clientY)).subtract(cvsPos);
-        let pWidth = this.props.collection.getTilePixelWidth();
-        let pHeight = this.props.collection.getTilePixelHeight();
+        let currentTilePos = new Vector(0, 0);
+        if (this.cvs) {
+            let canvas = this.cvs.getCanvas();
+            if (canvas) {
+                let rect = canvas.getBoundingClientRect();
+                let cvsPos = new Vector(rect.left, rect.top);
+                let pos = (new Vector(e.clientX, e.clientY)).subtract(cvsPos);
+                let pWidth = this.props.collection.getTilePixelWidth();
+                let pHeight = this.props.collection.getTilePixelHeight();
 
-        let currentTilePos = new Vector(floor(pos.getX() / pWidth), floor(pos.getY() / pHeight));
-        if (currentTilePos.getX() < 0) {
-            currentTilePos.setX(0);
-        } else if (currentTilePos.getX() > pWidth * this.props.collection.getLayerWidth()) {
-            currentTilePos.setX(this.props.collection.getLayerWidth() - 1);
-        }
+                currentTilePos = new Vector(floor(pos.getX() / pWidth), floor(pos.getY() / pHeight));
+            
+                if (currentTilePos.getX() < 0) {
+                    currentTilePos.setX(0);
+                } else if (currentTilePos.getX() > pWidth * this.props.collection.getLayerWidth()) {
+                    currentTilePos.setX(this.props.collection.getLayerWidth() - 1);
+                }
 
-        if (currentTilePos.getY() < 0) {
-            currentTilePos.setY(0);
-        } else if (currentTilePos.getY() > pHeight * this.props.collection.getLayerHeight()) {
-            currentTilePos.setY(this.props.collection.getLayerHeight() - 1);
+                if (currentTilePos.getY() < 0) {
+                    currentTilePos.setY(0);
+                } else if (currentTilePos.getY() > pHeight * this.props.collection.getLayerHeight()) {
+                    currentTilePos.setY(this.props.collection.getLayerHeight() - 1);
+                }
+            }
         }
 
         return currentTilePos;
@@ -228,42 +247,50 @@ export default class Board extends React.Component<Props, State> {
     }
 
     private refreshTile(x: number, y: number, color: string) {
-        let ctx = this.cvs.getCanvas().getContext('2d');
-        if (ctx) {
-            let pWidth = this.props.collection.getTilePixelWidth();
-            let pHeight = this.props.collection.getTilePixelHeight();
+        if (this.cvs) {
+            let canvas = this.cvs.getCanvas();
+            if (canvas) {
+                let ctx = canvas.getContext('2d');
+                if (ctx) {
+                    let pWidth = this.props.collection.getTilePixelWidth();
+                    let pHeight = this.props.collection.getTilePixelHeight();
 
-            ctx.clearRect(x * pWidth, y * pHeight, pWidth, pHeight);
+                    ctx.clearRect(x * pWidth, y * pHeight, pWidth, pHeight);
 
-            let arr = this.props.collection.getVisibleTiles(x, y);
-            for (let i = 0; i < arr.length; i++) {
-                let tile = arr[i];
-                let img = this.props.imageMap.get(tile.getImageSrc());
-                if (img) {
-                    ctx.drawImage(
-                        img, tile.getTileX() * pWidth, tile.getTileY() * pHeight, pWidth, pHeight,
-                        x * pWidth, y * pHeight, pWidth, pHeight
-                    );
+                    let arr = this.props.collection.getVisibleTiles(x, y);
+                    for (let i = 0; i < arr.length; i++) {
+                        let tile = arr[i];
+                        let img = this.props.imageMap.get(tile.getImageSrc());
+                        if (img) {
+                            ctx.drawImage(
+                                img, tile.getTileX() * pWidth, tile.getTileY() * pHeight, pWidth, pHeight,
+                                x * pWidth, y * pHeight, pWidth, pHeight
+                            );
+                        }
+                    }
+
+                    if (this.props.gridEnabled) {
+                        ctx.fillStyle = color;
+                        ctx.fillRect(x * pWidth, y * pHeight, 2, pHeight);
+                        ctx.fillRect(x * pWidth, y * pHeight, pWidth, 2);
+                        ctx.fillRect((x + 1) * pWidth - 2, y * pHeight, 2, pHeight);
+                        ctx.fillRect(x * pWidth, (y + 1) * pHeight - 2, pWidth, 2);
+                    }
                 }
             }
-
-            if (this.props.gridEnabled) {
-                ctx.fillStyle = color;
-                ctx.fillRect(x * pWidth, y * pHeight, 2, pHeight);
-                ctx.fillRect(x * pWidth, y * pHeight, pWidth, 2);
-                ctx.fillRect((x + 1) * pWidth - 2, y * pHeight, 2, pHeight);
-                ctx.fillRect(x * pWidth, (y + 1) * pHeight - 2, pWidth, 2);
-            }
         }
+        
     }
 
     private refreshBoard(): void {
-        this.cvs.draw(() => {
-            for (let x = 0; x < this.props.collection.getLayerWidth(); x++) {
-                for (let y = 0; y < this.props.collection.getLayerHeight(); y++) {
-                    this.refreshTile(x, y, '#666');
+        if (this.cvs) {
+            this.cvs.draw(() => {
+                for (let x = 0; x < this.props.collection.getLayerWidth(); x++) {
+                    for (let y = 0; y < this.props.collection.getLayerHeight(); y++) {
+                        this.refreshTile(x, y, '#666');
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 }
