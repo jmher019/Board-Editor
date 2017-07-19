@@ -9,9 +9,18 @@ interface Props {
     onChange?: (files: FileList) => void;
 }
 
-export default class FileItem extends React.Component<Props, null> {
+interface State {
+
+}
+
+export default class FileItem extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
+        this.state = this.getInitialState();
+    }
+
+    public getInitialState(): State {
+        return {} as State;
     }
 
     public render(): JSX.Element {
