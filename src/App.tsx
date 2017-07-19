@@ -73,8 +73,6 @@ const mapDispatchToProps = (dispatch: (T: {}) => void) => {
 };
 
 class App extends React.Component<StateProps & DispatchProps, State> {
-  private board: Board;
-
   constructor(props: StateProps & DispatchProps) {
     super(props);
     this.state = this.getInitialState();
@@ -124,7 +122,6 @@ class App extends React.Component<StateProps & DispatchProps, State> {
               }}
             >
               <Board
-                ref={board => { this.board = board; }}
                 isHighlighting={true}
                 collection={store.getState().board.collection}
                 imageMap={store.getState().board.imageMap}
