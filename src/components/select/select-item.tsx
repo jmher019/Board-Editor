@@ -11,9 +11,18 @@ interface Props {
     label?: string;
 }
 
-export default class SelectItem extends React.Component<Props, null> {
+interface State {
+
+}
+
+export default class SelectItem extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
+        this.state = this.getInitialState();
+    }
+
+    public getInitialState(): State {
+        return {} as State;
     }
 
     public render(): JSX.Element {
