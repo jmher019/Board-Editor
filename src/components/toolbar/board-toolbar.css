@@ -1,0 +1,15 @@
+.dropdown-menu {
+    background-color: #444;
+}
+
+.dropdown-menu > li > a {
+    color: #ccc;
+}
+
+.dropdown-header {
+    color: #aaa;
+}
+
+.dropdown-menu .divider {
+    background-color: #666;
+}

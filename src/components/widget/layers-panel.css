@@ -1,0 +1,49 @@
+.layers-panel {
+    background: rgb(45, 45, 45);
+    width: 100%;
+    height: 500px;
+    overflow: hidden;
+    border: 1px solid #666;
+    position: relative;
+    box-shadow: 1px 1px 1px rgba(102, 102, 102, 0.6);
+    padding: 4px 4px 4px 4px;
+    left: 0px;
+    top: 0px;
+}
+
+.layer-components-container {
+    position: absolute;
+    top: 10px;
+    left: 5%;
+    width: 90%;
+    height: 480px;
+    border: 1px solid #666;
+    overflow: auto;
+}
+
+.layer-component {
+    border-top: 1px solid #666;
+    border-bottom: 1px solid #666;
+    width: 100%;
+    height: 40px;
+    
+}
+
+.layer-component-label {
+    width: 100%;
+    height: 80%;
+    margin-top: 20%;
+    text-align: center;
+    color: #9d9d9d;
+}
+
+.layer-component-label.selected {
+    color: #009d00;
+}
+
+.layer-component-buttons {
+    width: 100%;
+    height: 100%;
+    margin-top: 5%;
+    margin-left: 20%;
+}

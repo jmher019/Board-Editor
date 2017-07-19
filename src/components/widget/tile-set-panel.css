@@ -1,0 +1,32 @@
+.tile-set-panel {
+    background: rgb(45, 45, 45);
+    width: 100%;
+    height: 500px;
+    overflow: hidden;
+    border: 1px solid #666;
+    position: relative;
+    box-shadow: 1px 1px 1px rgba(102, 102, 102, 0.6);
+    padding: 4px 4px 4px 4px;
+    left: 0px;
+    top: 0px;
+}
+
+.tile-set-board {
+    overflow: auto;
+    border: 1px solid #666;
+    background: #333;
+    position: relative;
+    top: 0px;
+    left: 0px;
+    width: 150px;
+    height: 400px;
+    margin-bottom: 5px;
+}
+
+.tile-set-preview {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    top: 200px;
+    left: 10px;
+}
