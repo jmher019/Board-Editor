@@ -72,7 +72,7 @@ export default class Canvas extends React.Component<Props, State> {
         );
     }
 
-    public getCanvas(): HTMLCanvasElement {
+    public getCanvas(): HTMLCanvasElement | null {
         return this.canvas;
     }
 
