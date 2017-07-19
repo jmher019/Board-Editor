@@ -14,7 +14,7 @@ interface Props {
 }
 
 export default class IconButton extends React.Component<Props, null> {
-    private cvs: Canvas;
+    private cvs: Canvas | null;
     private container: HTMLDivElement | null;
     private img: HTMLImageElement;
     
@@ -67,20 +67,22 @@ export default class IconButton extends React.Component<Props, null> {
     }
 
     private renderImage(): void {
-        this.cvs.draw(() => {
-            if (this.cvs) {
-                let canvas = this.cvs.getCanvas();
-                if (canvas) {
-                    let ctx = canvas.getContext('2d');
-                    if (ctx) {
-                        ctx.drawImage(
-                            this.img, 0, 0, this.img.width, this.img.height,
-                            0, 0, this.props.width, this.props.height
-                        );
+        if (this.cvs) {
+            this.cvs.draw(() => {
+                if (this.cvs) {
+                    let canvas = this.cvs.getCanvas();
+                    if (canvas) {
+                        let ctx = canvas.getContext('2d');
+                        if (ctx) {
+                            ctx.drawImage(
+                                this.img, 0, 0, this.img.width, this.img.height,
+                                0, 0, this.props.width, this.props.height
+                            );
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
     }
 
     private onMouseLeave(): void {
