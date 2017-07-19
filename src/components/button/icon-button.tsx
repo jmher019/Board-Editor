@@ -15,7 +15,7 @@ interface Props {
 
 export default class IconButton extends React.Component<Props, null> {
     private cvs: Canvas;
-    private container: HTMLDivElement;
+    private container: HTMLDivElement | null;
     private img: HTMLImageElement;
     
     constructor(props: Props) {
@@ -84,10 +84,14 @@ export default class IconButton extends React.Component<Props, null> {
     }
 
     private onMouseLeave(): void {
-        this.container.style.opacity = '';
+        if (this.container) {
+            this.container.style.opacity = '';
+        }
     }
 
     private onMouseEnter(): void {
-        this.container.style.opacity = '0.6';
+        if (this.container) {
+            this.container.style.opacity = '0.6';
+        }
     }
 }
