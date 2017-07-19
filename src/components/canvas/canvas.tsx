@@ -18,7 +18,7 @@ interface Props {
 }
 
 export default class Canvas extends React.Component<Props, State> {
-    private canvas: HTMLCanvasElement;
+    private canvas: HTMLCanvasElement | null;
 
     constructor(props: Props) {
         super(props);
