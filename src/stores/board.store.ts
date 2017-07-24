@@ -3,7 +3,6 @@ import { Vector } from '../utils/math-utils';
 import TileLayer from '../board-editor-modules/layer/tile-layer';
 import ImageMap from '../utils/image-map';
 import Tile, { TileOptions } from '../board-editor-modules/layer/image-tile';
-import EditUtils, { EditAction } from '../utils/undo-redo-utils';
 
 /**
  * Tile Collection ACTIONS
@@ -265,7 +264,7 @@ const boardInitialState = {
 } as BoardState;
 
 export let boardStore = (state = boardInitialState, action: Action): BoardState => {
-    let editAction: EditAction = {} as EditAction;
+    console.log(action.type);
     switch (action.type) {
         case ADD_LAYER:
             state.collection.addLayer();
@@ -283,16 +282,10 @@ export let boardStore = (state = boardInitialState, action: Action): BoardState 
             state.collection.moveLayer(action.indexStart, action.indexDest);
             break;
         case SET_WIDTH:
-            editAction.layerWidth = state.collection.getLayerWidth();
-            editAction.type = SET_WIDTH;
             state.collection.setLayerWidth(action.width);
-            EditUtils.pushAction(editAction);
             break;
         case SET_HEIGHT:
-            editAction.layerHeight = state.collection.getLayerHeight();
-            editAction.type = SET_HEIGHT;
             state.collection.setLayerHeight(action.height);
-            EditUtils.pushAction(editAction);
             break;
         case TOGGLE_VISIBILITY:
             state.collection.toggleLayerVisibility(action.index);

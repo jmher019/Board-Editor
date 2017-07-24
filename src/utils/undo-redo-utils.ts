@@ -3,10 +3,7 @@ import TileLayer from '../board-editor-modules/layer/tile-layer';
 import ConfigurationUtils from './configuration-utils';
 import { store } from '../stores/store';
 import { removeLayer, insertLayer, setLayer, moveLayer, setWidth, setHeight,
-    toggleVisibility, 
-    selectLayer,
-    setTile,
-    LayerAction} from '../stores/board.store';
+    toggleVisibility, selectLayer, setTile, Action} from '../stores/board.store';
 
 export const ADD_LAYER = 'ADD_LAYER';
 export const REMOVE_LAYER = 'REMOVE_LAYER';
@@ -40,7 +37,7 @@ export default class EditUtils {
     public static maxSize: number = ConfigurationUtils.undoStackMaxSize;
     public static undo: EditAction[] = [];
     public static redo: EditAction[] = [];
-    private static layerActions: LayerAction[] = [];
+    private static layerActions: Action[] = [];
 
     public static pushAction(action: EditAction): void {
         if (this.undo.length > EditUtils.maxSize) {
@@ -90,10 +87,12 @@ export default class EditUtils {
                     store.dispatch(moveLayer(action.layerIndexDest, action.layerIndex));
                     break;
                 case CHANGE_SIZE:
-                    let layerWidth = store.getState().collection.getLayerWidth();
-                    let layerHeight = store.getState().collection.getLayerHeight();
-                    store.dispatch(setWidth(action.layerWidth));
-                    store.dispatch(setHeight(action.layerHeight));
+                    let layerWidth = store.getState().board.collection.getLayerWidth();
+                    let layerHeight = store.getState().board.collection.getLayerHeight();
+                    EditUtils.layerActions.push(setWidth(action.layerWidth) as Action);
+                    EditUtils.layerActions.push(setHeight(action.layerHeight) as Action);
+                    store.dispatch(EditUtils.layerActions);
+                    EditUtils.layerActions = [];
                     action.layerHeight = layerHeight;
                     action.layerWidth = layerWidth;
                     break;
@@ -109,12 +108,12 @@ export default class EditUtils {
                     if (!EditUtils.undo[EditUtils.undo.length - 1] ||
                         EditUtils.undo[EditUtils.undo.length - 1].type !== DRAW) {
                         EditUtils.layerActions.push(setTile(action.tile, action.x, action.y,
-                                                            action.layerIndex, action.bucketFill));
+                                                            action.layerIndex, action.bucketFill) as Action);
                         store.dispatch(EditUtils.layerActions);
                         EditUtils.layerActions = [];
                     } else {
                         EditUtils.layerActions.push(setTile(action.tile, action.x, action.y,
-                                                            action.layerIndex, action.bucketFill));
+                                                            action.layerIndex, action.bucketFill) as Action);
                     }
                     action.tile = tile;
                     break;
@@ -159,10 +158,12 @@ export default class EditUtils {
                     store.dispatch(moveLayer(action.layerIndex, action.layerIndexDest));
                     break;
                 case CHANGE_SIZE:
-                    let layerWidth = store.getState().collection.getLayerWidth();
-                    let layerHeight = store.getState().collection.getLayerHeight();
-                    store.dispatch(setWidth(action.layerWidth));
-                    store.dispatch(setHeight(action.layerHeight));
+                    let layerWidth = store.getState().board.collection.getLayerWidth();
+                    let layerHeight = store.getState().board.collection.getLayerHeight();
+                    EditUtils.layerActions.push(setWidth(action.layerWidth) as Action);
+                    EditUtils.layerActions.push(setHeight(action.layerHeight) as Action);
+                    store.dispatch(EditUtils.layerActions);
+                    EditUtils.layerActions = [];
                     action.layerHeight = layerHeight;
                     action.layerWidth = layerWidth;
                     break;
@@ -178,12 +179,12 @@ export default class EditUtils {
                     if (!EditUtils.redo[EditUtils.undo.length - 1] ||
                         EditUtils.redo[EditUtils.undo.length - 1].type !== DRAW) {
                         EditUtils.layerActions.push(setTile(action.tile, action.x, action.y,
-                                                            action.layerIndex, action.bucketFill));
+                                                            action.layerIndex, action.bucketFill) as Action);
                         store.dispatch(EditUtils.layerActions);
                         EditUtils.layerActions = [];
                     } else {
                         EditUtils.layerActions.push(setTile(action.tile, action.x, action.y,
-                                                            action.layerIndex, action.bucketFill));
+                                                            action.layerIndex, action.bucketFill) as Action);
                     }
                     action.tile = tile;
                     break;

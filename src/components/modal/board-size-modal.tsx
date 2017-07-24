@@ -4,7 +4,7 @@ import { Form, FormGroup, FormControl, ControlLabel, FormControlProps, Button } 
 import { FormEvent } from 'react';
 import { FormControlEventTarget } from '../../utils/form-utils';
 import { store } from '../../stores/store';
-import { setWidth, setHeight } from '../../stores/board.store';
+import { setWidth, setHeight, Action } from '../../stores/board.store';
 import './board-size-modal.css';
 import EditUtils, { EditAction, CHANGE_SIZE } from '../../utils/undo-redo-utils';
 
@@ -80,8 +80,11 @@ export default class BoardSizeModal extends React.Component<ModalProps, State> {
         } as EditAction;
         EditUtils.pushAction(editAction);
 
-        store.dispatch(setWidth(parseInt(width, 10)));
-        store.dispatch(setHeight(parseInt(height, 10)));
+        let actions: Action[] = [
+            setWidth(parseInt(width, 10)) as Action,
+            setHeight(parseInt(height, 10)) as Action
+        ];
+        store.dispatch(actions);
         if (this.props.shouldClose) {
             if (this.props.shouldClose()) {
                 if (this.props.onHide) {

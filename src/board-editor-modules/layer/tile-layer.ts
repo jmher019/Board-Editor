@@ -105,6 +105,7 @@ export default class TileLayer {
                         pixelSize: this.options.tilePixelSize,
                         tileCoords: new Vector(0, 0)
                     } as TileOptions));
+                    i++;
                 }
             }
 
