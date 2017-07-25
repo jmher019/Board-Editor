@@ -24,6 +24,7 @@ interface Props {
     onCurrentTileUpdate?: (t: Tile) => void;
     visibleLayers?: boolean[];
     bucketFill?: boolean;
+    id?: string;
 }
 
 export default class Board extends React.Component<Props, State> {
@@ -80,8 +81,25 @@ export default class Board extends React.Component<Props, State> {
                 this.cvs.props.height !== next.collection.getLayerHeight() * next.collection.getTilePixelHeight() ||
                 this.props.collection !== next.collection ||
                 (next.gridEnabled !== undefined && this.props.gridEnabled !== next.gridEnabled) ||
-                this.props.collection.getNumberOfLayers() !== next.collection.getNumberOfLayers() ||
-                this.props.visibleLayers !== next.visibleLayers ? true : false;
+                this.props.collection.getNumberOfLayers() !== next.collection.getNumberOfLayers() ? true : false;
+
+            // Check if the visible layers has changed
+            if (!this.sizeInvalidated) {
+                if (this.props.visibleLayers !== next.visibleLayers) {
+                    if (!this.props.visibleLayers || !next.visibleLayers) {
+                        this.sizeInvalidated = true;
+                    } else if (this.props.visibleLayers && next.visibleLayers) {
+                        let maxLength = this.props.visibleLayers.length > next.visibleLayers.length ?
+                            this.props.visibleLayers.length : next.visibleLayers.length;
+                        for (let i = 0; i < maxLength; i++) {
+                            if (this.props.visibleLayers[i] !== next.visibleLayers[i]) {
+                                this.sizeInvalidated = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -132,21 +150,24 @@ export default class Board extends React.Component<Props, State> {
             let layer = this.props.collection.getLayer(this.props.currentLayer);
             if (layer && layer.isVisible()) {
                 let tile = layer.getTile(currentTilePos.getX(), currentTilePos.getY()).clone();
-                layer.setTile(currentTilePos.getX(), currentTilePos.getY(),
-                              this.props.drawingTile, this.props.bucketFill);
                 if (!tile.equals(this.props.drawingTile)) {
+                    let clonedLayer = this.props.bucketFill ? layer.clone() : undefined;
                     let editAction = {
                         type: DRAW,
                         x: currentTilePos.getX(),
                         y: currentTilePos.getY(),
                         tile: tile,
                         bucketFill: this.props.bucketFill,
-                        layerIndex: this.props.currentLayer
+                        layerIndex: this.props.currentLayer,
+                        layer: clonedLayer
                     } as EditAction;
                     EditUtils.pushAction(editAction);
                 }
+
+                layer.setTile(currentTilePos.getX(), currentTilePos.getY(),
+                              this.props.drawingTile, this.props.bucketFill);
                 
-                if (this.props.bucketFill) {
+                if (!tile.equals(this.props.drawingTile) && this.props.bucketFill) {
                     this.refreshBoard();
                 }
             }

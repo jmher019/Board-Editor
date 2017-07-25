@@ -1,4 +1,5 @@
-import { BoardState, boardStore, Action } from './board.store';
+import { BoardStoreState, boardStore, Action } from './board.store';
+import ConfigurationUtils from '../utils/configuration-utils';
 
 const { createStore, applyMiddleware } = require('redux');
 
@@ -14,12 +15,12 @@ interface MultiStore {
 }
 
 export interface Store {
-    board: BoardState;
+    boardStore: BoardStoreState;
 }
 
 let storeApp = (state: Store = {} as Store, action: Action): Store => {
     return {
-        board: boardStore(state.board, action)
+        boardStore: boardStore(state.boardStore, action)
     };
 };
 
@@ -29,9 +30,10 @@ export let store = createStoreWithMiddleware(storeApp);
 
 export function areLayersVisible(state: Store = {} as Store): boolean[] {
     let arr: boolean[] = [];
-    
-    for (let i = 0; i < state.board.collection.getNumberOfLayers(); i++) {
-        arr.push(state.board.collection.getLayer(i).isVisible());
+    let boardState = state.boardStore.boards[ConfigurationUtils.DrawingBoardId];
+
+    for (let i = 0; i < boardState.collection.getNumberOfLayers(); i++) {
+        arr.push(boardState.collection.getLayer(i).isVisible());
     }
 
     return arr;

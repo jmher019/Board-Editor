@@ -1,20 +1,17 @@
 import './tile-set-panel.css';
 import * as React from 'react';
 import Board from '../canvas/board';
-import { Vector, ceil, floor } from '../../utils/math-utils';
 import { Form } from 'react-bootstrap';
-import TileLayerCollection,
-{ TileLayerCollectionOptions } from '../../board-editor-modules/layer/tile-layer-collection';
 import SelectItem from '../select/select-item';
 import FileItem from '../button/file-button';
-import { putImage, setDrawingTile } from '../../stores/board.store';
+import { putImage, setDrawingTile, setCurrentTileset, overrideTileLayerCollection } from '../../stores/board.store';
 import { store } from '../../stores/store';
 import ImageMap from '../../utils/image-map';
 import Tile from '../../board-editor-modules/layer/image-tile';
+import ConfigurationUtils from '../../utils/configuration-utils';
 
 interface State {
     currentImage: string;
-    collection: TileLayerCollection;
     images: string[];
 }
 
@@ -34,23 +31,11 @@ export default class TileSetPanel extends React.Component<Props, State> {
     public getInitialState(): State {
         return {
             currentImage: '',
-            collection: new TileLayerCollection({
-                layerSize: new Vector(4, 14),
-                numberOfLayers: 1,
-                tilePixelSize: new Vector(32, 32)
-            } as TileLayerCollectionOptions),
             images: ['Select an Image']
         } as State;
     }
 
     public render(): JSX.Element {
-        let collection = new TileLayerCollection({
-            layerSize: new Vector(1, 1),
-            numberOfLayers: 1,
-            tilePixelSize: new Vector(32, 32)
-        } as TileLayerCollectionOptions);
-        collection.getLayer(0).setTile(0, 0, this.props.drawingTile);
-
         return (
             <div className={'tile-set-panel'}>
                 <div className={'row'}>
@@ -72,10 +57,14 @@ export default class TileSetPanel extends React.Component<Props, State> {
                             <Board
                                 isSelecting={true}
                                 isHighlighting={false}
-                                collection={collection}
-                                imageMap={this.props.imageMap}
+                                collection={
+                                    store.getState().boardStore.boards[ConfigurationUtils.TilePreviewBoardId]
+                                        .collection
+                                }
+                                imageMap={store.getState().boardStore.imageMap}
                                 gridEnabled={true}
                                 currentLayer={0}
+                                id={'selected tile board'}
                             />
                         </div>
                     </div>
@@ -88,10 +77,13 @@ export default class TileSetPanel extends React.Component<Props, State> {
                                 onCurrentTileUpdate={(t: Tile) => {
                                     this.updateTile(t);
                                 }}
-                                collection={this.state.collection}
-                                imageMap={this.props.imageMap}
+                                collection={
+                                    store.getState().boardStore.boards[ConfigurationUtils.TilesetViewerId].collection
+                                }
+                                imageMap={store.getState().boardStore.imageMap}
                                 gridEnabled={true}
                                 currentLayer={0}
+                                id={'tile set board'}
                             />
                         </div>
                     </div>
@@ -103,6 +95,7 @@ export default class TileSetPanel extends React.Component<Props, State> {
                                 accept={'.png,.jpg'}
                                 multiple={true}
                                 onChange={(files: FileList) => {
+                                    let count = files.length;
                                     for (let i = 0; i < files.length; i++) {
                                         if (this.props.imageMap.get(files.item(i).name)) {
                                             continue;
@@ -114,6 +107,15 @@ export default class TileSetPanel extends React.Component<Props, State> {
                                             let images = this.state.images;
                                             images.push(files.item(i).name);
                                             this.setState({images: images});
+                                            if (--count === 0) {
+                                                store.dispatch(
+                                                    overrideTileLayerCollection(
+                                                        store.getState().boardStore
+                                                            .boards[ConfigurationUtils.DrawingBoardId]
+                                                            .collection.clone()
+                                                    )
+                                                );
+                                            }
                                         };
                                     }
                                 }}
@@ -126,35 +128,11 @@ export default class TileSetPanel extends React.Component<Props, State> {
     }
 
     private onCurrentImageChange(currentImage: string): void {
-        let img = this.props.imageMap.get(currentImage);
-        if (img) {
-            let collection = this.state.collection.clone();
-            let width = img.width;
-            let height = img.height;
-            let tileWidth = collection.getTilePixelWidth();
-            let tileHeight = collection.getTilePixelHeight();
-            let numTiles = floor(width * height / (tileWidth * tileHeight));
-            let newCollectionHeight = ceil(numTiles / 4);
-
-            collection.setLayerHeight(newCollectionHeight);
-            let tileStride = width / tileWidth;
-            let index = 0;
-            for (let y = 0; y < collection.getLayerHeight(); y++) {
-                for (let x = 0; x < collection.getLayerWidth(); x++) {
-                    collection.getLayer(0).setTile(x, y, new Tile({
-                        imageSrc: currentImage,
-                        tileCoords: new Vector(floor(index % tileStride), floor(index / tileStride)),
-                        pixelSize: new Vector(tileWidth, tileHeight)
-                    }));
-                    index++;
-                }
-            }
-            this.setState({collection, currentImage});
-        }
+        store.dispatch(setCurrentTileset(currentImage));
     }
 
     private updateTile(t: Tile): void {
-        if (!store.getState().board.eraseEnabled) {
+        if (!store.getState().boardStore.boards[ConfigurationUtils.DrawingBoardId].eraseEnabled) {
             store.dispatch(setDrawingTile(t));
         }
     }

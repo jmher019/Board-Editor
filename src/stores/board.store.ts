@@ -1,14 +1,16 @@
 import TileLayerCollection, { TileLayerCollectionOptions } from '../board-editor-modules/layer/tile-layer-collection';
-import { Vector } from '../utils/math-utils';
+import { Vector, floor, ceil } from '../utils/math-utils';
 import TileLayer from '../board-editor-modules/layer/tile-layer';
 import ImageMap from '../utils/image-map';
 import Tile, { TileOptions } from '../board-editor-modules/layer/image-tile';
+import { StringMap } from '../utils/string-map';
+import ConfigurationUtils from '../utils/configuration-utils';
 
 /**
- * Tile Collection ACTIONS
+ * Board State ACTIONS
  */
 
-export interface TileCollectionAction {
+export interface BoardStateAction {
     type: string;
     index: number;
     layer: TileLayer;
@@ -17,6 +19,15 @@ export interface TileCollectionAction {
     width: number;
     height: number;
     collection: TileLayerCollection;
+    toggleGrid: boolean;
+    toggleErase: boolean;
+    togglePicker: boolean;
+    toggleBucketFill: boolean;
+    tile: Tile;
+    x: number;
+    y: number;
+    bucketFill: boolean;
+    currentImage: string;
 }
 
 const ADD_LAYER = 'ADD_LAYER';
@@ -29,214 +40,176 @@ const SET_HEIGHT = 'SET_HEIGHT';
 const TOGGLE_VISIBILITY = 'TOGGLE_VISIBILITY';
 const SELECT_LAYER = 'SELECT_LAYER';
 const OVERRIDE_TILE_LAYER_COLLECTION = 'OVERRIDE_TILE_LAYER_COLLECTION';
-
-export let addLayer = (): TileCollectionAction => {
-    return {
-        type: ADD_LAYER
-    } as TileCollectionAction;
-};
-
-export let removeLayer = (index: number): TileCollectionAction => {
-    return {
-        type: REMOVE_LAYER,
-        index
-    } as TileCollectionAction;
-};
-
-export let setLayer = (index: number, layer: TileLayer): TileCollectionAction => {
-    return {
-        type: SET_LAYER,
-        index,
-        layer
-    } as TileCollectionAction;
-};
-
-export let insertLayer = (index: number, layer: TileLayer): TileCollectionAction => {
-    return {
-        type: INSERT_LAYER,
-        index,
-        layer
-    } as TileCollectionAction;
-};
-
-export let moveLayer = (indexStart: number, indexDest: number): TileCollectionAction => {
-    return {
-        type: MOVE_LAYER,
-        indexStart,
-        indexDest
-    } as TileCollectionAction;
-};
-
-export let setWidth = (width: number): TileCollectionAction => {
-    return {
-        type: SET_WIDTH,
-        width
-    } as TileCollectionAction;
-};
-
-export let setHeight = (height: number): TileCollectionAction => {
-    return {
-        type: SET_HEIGHT,
-        height
-    } as TileCollectionAction;
-};
-
-export let toggleVisibility = (index: number): TileCollectionAction => {
-    return {
-        type: TOGGLE_VISIBILITY,
-        index
-    } as TileCollectionAction;
-};
-
-export let selectLayer = (index: number): TileCollectionAction => {
-    return {
-        type: SELECT_LAYER,
-        index
-    } as TileCollectionAction;
-};
-
-export let overrideTileLayerCollection = (collection: TileLayerCollection): TileCollectionAction => {
-    return {
-        type: OVERRIDE_TILE_LAYER_COLLECTION,
-        collection
-    } as TileCollectionAction;
-};
-
-/**
- * END OF Tile Collection ACTIONS
- */
-
-/**
- * Image Map ACTIONS
- */
-
-const PUT_IMAGE = 'PUT_IMAGE';
-
-export interface ImageMapAction {
-    img: HTMLImageElement;
-    key: string;
-}
-
-export function putImage(img: HTMLImageElement, key: string): ImageMapAction {
-    return {
-        type: PUT_IMAGE,
-        img,
-        key
-    } as ImageMapAction;
-}
-
-/**
- * END OF Image Map ACTIONS
- */
-
-/**
- * Drawing Tile ACTIONS
- */
-
-const SET_DRAWING_TILE = 'SET_DRAWING_TILE';
-
-export interface DrawingTileAction {
-    type: string;
-    tile: Tile;
-}
-
-export function setDrawingTile(tile: Tile): DrawingTileAction {
-    return {
-        type: SET_DRAWING_TILE,
-        tile
-    } as DrawingTileAction;
-}
-
-/**
- * END OF Drawing Tile ACTIONS
- */
-
-/**
- * Enable Toggle ACTIONS
- */
-
 const TOGGLE_GRID = 'TOGGLE_GRID';
 const TOGGLE_ERASE = 'TOGGLE_ERASE';
 const TOGGLE_PICKER = 'TOGGLE_PICKER';
 const TOGGLE_BUCKET_FILL = 'TOGGLE_BUCKET_FILL';
+const SET_TILE = 'SET_TILE';
+const SET_DRAWING_TILE = 'SET_DRAWING_TILE';
+const SET_CURRENT_TILESET = 'SET_CURRENT_TILESET';
 
-export interface ToggleAction {
-    type: string;
-    toggleGrid: boolean;
-    toggleErase: boolean;
-    togglePicker: boolean;
-    toggleBucketFill: boolean;
-}
+export let addLayer = (): BoardStateAction => {
+    return {
+        type: ADD_LAYER
+    } as BoardStateAction;
+};
 
-export function toggleGrid(toggleGrid: boolean): ToggleAction {
+export let removeLayer = (index: number): BoardStateAction => {
+    return {
+        type: REMOVE_LAYER,
+        index
+    } as BoardStateAction;
+};
+
+export let setLayer = (index: number, layer: TileLayer): BoardStateAction => {
+    return {
+        type: SET_LAYER,
+        index,
+        layer
+    } as BoardStateAction;
+};
+
+export let insertLayer = (index: number, layer: TileLayer): BoardStateAction => {
+    return {
+        type: INSERT_LAYER,
+        index,
+        layer
+    } as BoardStateAction;
+};
+
+export let moveLayer = (indexStart: number, indexDest: number): BoardStateAction => {
+    return {
+        type: MOVE_LAYER,
+        indexStart,
+        indexDest
+    } as BoardStateAction;
+};
+
+export let setWidth = (width: number): BoardStateAction => {
+    return {
+        type: SET_WIDTH,
+        width
+    } as BoardStateAction;
+};
+
+export let setHeight = (height: number): BoardStateAction => {
+    return {
+        type: SET_HEIGHT,
+        height
+    } as BoardStateAction;
+};
+
+export let toggleVisibility = (index: number): BoardStateAction => {
+    return {
+        type: TOGGLE_VISIBILITY,
+        index
+    } as BoardStateAction;
+};
+
+export let selectLayer = (index: number): BoardStateAction => {
+    return {
+        type: SELECT_LAYER,
+        index
+    } as BoardStateAction;
+};
+
+export let overrideTileLayerCollection = (collection: TileLayerCollection): BoardStateAction => {
+    return {
+        type: OVERRIDE_TILE_LAYER_COLLECTION,
+        collection
+    } as BoardStateAction;
+};
+
+export function toggleGrid(toggleGrid: boolean): BoardStateAction {
     return {
         type: TOGGLE_GRID,
         toggleGrid
-    } as ToggleAction;
+    } as BoardStateAction;
 }
 
-export function toggleErase(toggleErase: boolean): ToggleAction {
+export function toggleErase(toggleErase: boolean): BoardStateAction {
     return {
         type: TOGGLE_ERASE,
         toggleErase
-    } as ToggleAction;
+    } as BoardStateAction;
 }
 
-export function togglePicker(togglePicker: boolean): ToggleAction {
+export function togglePicker(togglePicker: boolean): BoardStateAction {
     return {
         type: TOGGLE_PICKER,
         togglePicker
-    } as ToggleAction;
+    } as BoardStateAction;
 }
 
-export function toggleBucketFill(toggleBucketFill: boolean): ToggleAction {
+export function toggleBucketFill(toggleBucketFill: boolean): BoardStateAction {
     return {
         type: TOGGLE_BUCKET_FILL,
         toggleBucketFill
-    } as ToggleAction;
+    } as BoardStateAction;
 }
 
-/**
- * END OF Toggle Grid ACTIONS
- */
-
-/**
- * Layer Actions
- */
-
-const SET_TILE = 'SET_TILE';
-
-export interface LayerAction {
-    type: string;
-    tile: Tile;
-    x: number;
-    y: number;
-    layerIndex: number;
-    bucketFill: boolean;
-}
-
-export function setTile(tile: Tile, x: number, y: number, layerIndex: number, bucketFill: boolean): LayerAction {
+export function setTile(tile: Tile, x: number, y: number, index: number, bucketFill: boolean): BoardStateAction {
     return {
         type: SET_TILE,
         tile,
         x,
         y,
-        layerIndex,
+        index,
         bucketFill
-    } as LayerAction;
+    } as BoardStateAction;
 }
+
+export function setDrawingTile(tile: Tile): BoardStateAction {
+    return {
+        type: SET_DRAWING_TILE,
+        tile
+    } as BoardStateAction;
+}
+
+export function setCurrentTileset(currentImage: string): BoardStateAction {
+    return {
+        type: SET_CURRENT_TILESET,
+        currentImage
+    } as BoardStateAction;
+}
+
+/**
+ * END OF Board State ACTIONS
+ */
+
+/**
+ * Board Store ACTIONS
+ */
+
+const PUT_IMAGE = 'PUT_IMAGE';
+
+export interface BoardStoreAction {
+    type: string;
+    img: HTMLImageElement;
+    key: string;
+}
+
+export function putImage(img: HTMLImageElement, key: string): BoardStoreAction {
+    return {
+        type: PUT_IMAGE,
+        img,
+        key
+    } as BoardStoreAction;
+}
+
+/**
+ * END OF Board Store ACTIONS
+ */
 
 /**
  * REDUCERS
  */
 
-export interface Action extends TileCollectionAction, ImageMapAction, DrawingTileAction, ToggleAction, LayerAction {
+export interface Action extends BoardStoreAction, BoardStateAction {
 }
 
 export interface BoardState {
     collection: TileLayerCollection;
-    imageMap: ImageMap;
-    drawingTile: Tile;
     gridEnabled: boolean;
     selectedLayer: number;
     eraseEnabled: boolean;
@@ -244,51 +217,87 @@ export interface BoardState {
     bucketFillEnabled: boolean;
 }
 
-const boardInitialState = {
-    collection: new TileLayerCollection({
-        layerSize: new Vector(32, 32),
-        tilePixelSize: new Vector(32, 32),
-        numberOfLayers: 1
-    } as TileLayerCollectionOptions),
-    imageMap: new ImageMap(),
+export interface BoardStoreState {
+    boards: StringMap<BoardState>;
+    drawingTile: Tile;
+    imageMap: ImageMap;
+}
+
+const boardStoreInitialState = {
+    boards: {
+        'tile-preview': {
+            collection: new TileLayerCollection({
+                layerSize: new Vector(1, 1),
+                tilePixelSize: new Vector(32, 32),
+                numberOfLayers: 1
+            } as TileLayerCollectionOptions),
+            gridEnabled: true,
+            selectedLayer: 0,
+            eraseEnabled: false,
+            pickerEnabled: false,
+            bucketFillEnabled: false
+        } as BoardState,
+        'tileset-viewer': {
+            collection: new TileLayerCollection({
+                layerSize: new Vector(4, 14),
+                tilePixelSize: new Vector(32, 32),
+                numberOfLayers: 1
+            } as TileLayerCollectionOptions),
+            gridEnabled: true,
+            selectedLayer: 0,
+            eraseEnabled: false,
+            pickerEnabled: false,
+            bucketFillEnabled: false
+        } as BoardState,
+        'drawing-board': {
+            collection: new TileLayerCollection({
+                layerSize: new Vector(32, 32),
+                tilePixelSize: new Vector(32, 32),
+                numberOfLayers: 1
+            } as TileLayerCollectionOptions),
+            gridEnabled: true,
+            selectedLayer: 0,
+            eraseEnabled: false,
+            pickerEnabled: false,
+            bucketFillEnabled: false
+        } as BoardState
+    } as StringMap<BoardState>,
     drawingTile: new Tile({
         imageSrc: '',
         pixelSize: new Vector(32, 32),
         tileCoords: new Vector(0, 0)
     } as TileOptions),
-    gridEnabled: true,
-    selectedLayer: 0,
-    eraseEnabled: false,
-    pickerEnabled: false,
-    bucketFillEnabled: false
-} as BoardState;
+    imageMap: new ImageMap()
+} as BoardStoreState;
 
-export let boardStore = (state = boardInitialState, action: Action): BoardState => {
-    console.log(action.type);
+export let boardStore = (state = boardStoreInitialState, action: Action): BoardStoreState => {
+    let drawingBoardState = state.boards[ConfigurationUtils.DrawingBoardId];
+    let previewBoardState = state.boards[ConfigurationUtils.TilePreviewBoardId];
+    let tilesetViewerBoardState = state.boards[ConfigurationUtils.TilesetViewerId];
     switch (action.type) {
         case ADD_LAYER:
-            state.collection.addLayer();
+            drawingBoardState.collection.addLayer();
             break;
         case REMOVE_LAYER:
-            state.collection.removeLayer(action.index);
+            drawingBoardState.collection.removeLayer(action.index);
             break;
         case SET_LAYER:
-            state.collection.setLayer(action.index, action.layer);
+            drawingBoardState.collection.setLayer(action.index, action.layer);
             break;
         case INSERT_LAYER:
-            state.collection.insertLayer(action.index, action.layer);
+            drawingBoardState.collection.insertLayer(action.index, action.layer);
             break;
         case MOVE_LAYER:
-            state.collection.moveLayer(action.indexStart, action.indexDest);
+            drawingBoardState.collection.moveLayer(action.indexStart, action.indexDest);
             break;
         case SET_WIDTH:
-            state.collection.setLayerWidth(action.width);
+            drawingBoardState.collection.setLayerWidth(action.width);
             break;
         case SET_HEIGHT:
-            state.collection.setLayerHeight(action.height);
+            drawingBoardState.collection.setLayerHeight(action.height);
             break;
         case TOGGLE_VISIBILITY:
-            state.collection.toggleLayerVisibility(action.index);
+            drawingBoardState.collection.toggleLayerVisibility(action.index);
             break;
         case PUT_IMAGE:
             state.imageMap.put(action.key, action.img);
@@ -299,32 +308,66 @@ export let boardStore = (state = boardInitialState, action: Action): BoardState 
             state.drawingTile.setTileY(action.tile.getTileY());
             state.drawingTile.setPixelWidth(action.tile.getPixelWidth());
             state.drawingTile.setPixelHeight(action.tile.getPixelHeight());
+            let collection = previewBoardState.collection.clone();
+            collection.getLayer(0).setTile(0, 0, state.drawingTile);
+            previewBoardState.collection = collection;
             break;
         case TOGGLE_GRID:
-            state.gridEnabled = action.toggleGrid;
+            drawingBoardState.gridEnabled = action.toggleGrid;
             break;
         case TOGGLE_ERASE:
-            state.eraseEnabled = action.toggleErase;
-            if (state.eraseEnabled) {
+            drawingBoardState.eraseEnabled = action.toggleErase;
+            if (drawingBoardState.eraseEnabled) {
                 state.drawingTile.setImageSrc('')
                     .setTileX(0)
                     .setTileY(0);
+                let newCollection = previewBoardState.collection.clone();
+                newCollection.getLayer(0).setTile(0, 0, state.drawingTile);
+                previewBoardState.collection = newCollection;
             }
             break;
         case TOGGLE_PICKER:
-            state.pickerEnabled = action.togglePicker;
+            drawingBoardState.pickerEnabled = action.togglePicker;
             break;
         case TOGGLE_BUCKET_FILL:
-            state.bucketFillEnabled = action.toggleBucketFill;
+            drawingBoardState.bucketFillEnabled = action.toggleBucketFill;
             break;
         case SELECT_LAYER:
-            state.selectedLayer = action.index;
+            drawingBoardState.selectedLayer = action.index;
             break;
         case OVERRIDE_TILE_LAYER_COLLECTION:
-            state.collection = action.collection;
+            drawingBoardState.collection = action.collection;
             break;
         case SET_TILE:
-            state.collection.getLayer(action.layerIndex).setTile(action.x, action.y, action.tile, action.bucketFill);
+            drawingBoardState.collection.getLayer(action.index)
+                .setTile(action.x, action.y, action.tile, action.bucketFill);
+            break;
+        case SET_CURRENT_TILESET:
+            let img = state.imageMap.get(action.currentImage);
+            if (img) {
+                let tilesetCollection = tilesetViewerBoardState.collection.clone();
+                let width = img.width;
+                let height = img.height;
+                let tileWidth = tilesetCollection.getTilePixelWidth();
+                let tileHeight = tilesetCollection.getTilePixelHeight();
+                let numTiles = floor(width * height / (tileWidth * tileHeight));
+                let newCollectionHeight = ceil(numTiles / 4);
+
+                tilesetCollection.setLayerHeight(newCollectionHeight);
+                let tileStride = width / tileWidth;
+                let index = 0;
+                for (let y = 0; y < tilesetCollection.getLayerHeight(); y++) {
+                    for (let x = 0; x < tilesetCollection.getLayerWidth(); x++) {
+                        tilesetCollection.getLayer(0).setTile(x, y, new Tile({
+                            imageSrc: action.currentImage,
+                            tileCoords: new Vector(floor(index % tileStride), floor(index / tileStride)),
+                            pixelSize: new Vector(tileWidth, tileHeight)
+                        }));
+                        index++;
+                    }
+                }
+                tilesetViewerBoardState.collection = tilesetCollection;
+            }
             break;
         default:
             break;

@@ -7,6 +7,7 @@ import { store } from '../../stores/store';
 import { setWidth, setHeight, Action } from '../../stores/board.store';
 import './board-size-modal.css';
 import EditUtils, { EditAction, CHANGE_SIZE } from '../../utils/undo-redo-utils';
+import ConfigurationUtils from '../../utils/configuration-utils';
 
 interface State {
     width: string;
@@ -75,14 +76,30 @@ export default class BoardSizeModal extends React.Component<ModalProps, State> {
     private onSubmit(width: string, height: string) {
         let editAction = {
             type: CHANGE_SIZE,
-            layerWidth: store.getState().board.collection.getLayerWidth(),
-            layerHeight: store.getState().board.collection.getLayerHeight(),
+            layerWidth: store.getState().boardStore.boards[ConfigurationUtils.DrawingBoardId]
+                .collection.getLayerWidth(),
+            layerHeight: store.getState().boardStore.boards[ConfigurationUtils.DrawingBoardId]
+                .collection.getLayerHeight(),
         } as EditAction;
         EditUtils.pushAction(editAction);
 
+        let widthVal = parseInt(width, 10);
+        let heightVal = parseInt(height, 10);
+        if (widthVal <= 0) {
+            widthVal = 1;
+        } else if (widthVal > 150) {
+            widthVal = 150;
+        }
+
+        if (heightVal <= 0) {
+            heightVal = 1;
+        } else if (heightVal > 150) {
+            heightVal = 150;
+        }
+
         let actions: Action[] = [
-            setWidth(parseInt(width, 10)) as Action,
-            setHeight(parseInt(height, 10)) as Action
+            setWidth(widthVal) as Action,
+            setHeight(heightVal) as Action
         ];
         store.dispatch(actions);
         if (this.props.shouldClose) {

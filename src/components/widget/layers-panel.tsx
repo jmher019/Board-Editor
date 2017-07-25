@@ -6,6 +6,7 @@ import { store, Store, areLayersVisible } from '../../stores/store';
 import { toggleVisibility, addLayer, selectLayer, removeLayer, moveLayer } from '../../stores/board.store';
 import EditUtils, { EditAction, SELECT_LAYER, TOGGLE_VISIBILITY, REMOVE_LAYER, MOVE_LAYER,
     ADD_LAYER } from '../../utils/undo-redo-utils';
+import ConfigurationUtils from '../../utils/configuration-utils';
 
 const { connect } = require('react-redux');
 
@@ -62,7 +63,8 @@ class LayersPanel extends React.Component<Props & DispatchProps & StateProps, St
                         onClick={() => {
                             let editAction = {
                                 type: ADD_LAYER,
-                                layerIndex: store.getState().board.collection.getNumberOfLayers()
+                                layerIndex: store.getState()
+                                    .boardStore.boards[ConfigurationUtils.DrawingBoardId].collection.getNumberOfLayers()
                             } as EditAction;
                             store.dispatch(addLayer());
                             EditUtils.pushAction(editAction);
@@ -78,7 +80,7 @@ class LayersPanel extends React.Component<Props & DispatchProps & StateProps, St
     private getLayerDivs(): JSX.Element[] {
         let ret: JSX.Element[] = [];
         const length: number = this.props.tileLayerCollection.getNumberOfLayers();
-        let selectedIndex: number = store.getState().board.selectedLayer;
+        let selectedIndex: number = store.getState().boardStore.boards[ConfigurationUtils.DrawingBoardId].selectedLayer;
         for (let i = 0; i < length; i++) {
             const layer = this.props.tileLayerCollection.getLayer(i);
             ret.push(
@@ -90,7 +92,7 @@ class LayersPanel extends React.Component<Props & DispatchProps & StateProps, St
                             onClick={() => {
                                 let editAction = {
                                     type: SELECT_LAYER,
-                                    layerIndex: store.getState().board.selectedIndex,
+                                    layerIndex: selectedIndex,
                                     layerIndexDest: i
                                 } as EditAction;
                                 store.dispatch(selectLayer(i));
@@ -131,7 +133,8 @@ class LayersPanel extends React.Component<Props & DispatchProps & StateProps, St
                                             let editAction = {
                                                 type: REMOVE_LAYER,
                                                 layerIndex: i,
-                                                layer: store.getState().board.collection.getLayer(i)
+                                                layer: store.getState().boardStore
+                                                    .boards[ConfigurationUtils.DrawingBoardId].collection.getLayer(i)
                                             } as EditAction;
                                             store.dispatch(removeLayer(i));
                                             EditUtils.pushAction(editAction);

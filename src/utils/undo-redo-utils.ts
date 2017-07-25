@@ -3,7 +3,8 @@ import TileLayer from '../board-editor-modules/layer/tile-layer';
 import ConfigurationUtils from './configuration-utils';
 import { store } from '../stores/store';
 import { removeLayer, insertLayer, setLayer, moveLayer, setWidth, setHeight,
-    toggleVisibility, selectLayer, setTile, Action} from '../stores/board.store';
+    toggleVisibility, selectLayer, setTile, Action, overrideTileLayerCollection
+} from '../stores/board.store';
 
 export const ADD_LAYER = 'ADD_LAYER';
 export const REMOVE_LAYER = 'REMOVE_LAYER';
@@ -62,10 +63,11 @@ export default class EditUtils {
 
     public static undoAction(): void {
         let action = EditUtils.undo.splice(EditUtils.undo.length - 1, 1)[0];
+        let drawingBoardState = store.getState().boardStore.boards[ConfigurationUtils.DrawingBoardId];
         if (action) {
             switch (action.type) {
                 case ADD_LAYER:
-                    let layer = store.getState().board.collection.getLayer(action.layerIndex);
+                    let layer = drawingBoardState.collection.getLayer(action.layerIndex);
                     store.dispatch(removeLayer(action.layerIndex));
                     action.layer = layer;
                     break;
@@ -74,12 +76,12 @@ export default class EditUtils {
                     action.layer = null;
                     break;
                 case SET_LAYER:
-                    layer = store.getState().board.collection.getLayer(action.layerIndex);
+                    layer = drawingBoardState.collection.getLayer(action.layerIndex);
                     store.dispatch(setLayer(action.layerIndex, action.layer as TileLayer));
                     action.layer = layer;
                     break;
                 case INSERT_LAYER:
-                    layer = store.getState().board.collection.getLayer();
+                    layer = drawingBoardState.collection.getLayer();
                     store.dispatch(removeLayer(action.layerIndex));
                     action.layer = layer;
                     break;
@@ -87,8 +89,8 @@ export default class EditUtils {
                     store.dispatch(moveLayer(action.layerIndexDest, action.layerIndex));
                     break;
                 case CHANGE_SIZE:
-                    let layerWidth = store.getState().board.collection.getLayerWidth();
-                    let layerHeight = store.getState().board.collection.getLayerHeight();
+                    let layerWidth = drawingBoardState.collection.getLayerWidth();
+                    let layerHeight = drawingBoardState.collection.getLayerHeight();
                     EditUtils.layerActions.push(setWidth(action.layerWidth) as Action);
                     EditUtils.layerActions.push(setHeight(action.layerHeight) as Action);
                     store.dispatch(EditUtils.layerActions);
@@ -103,19 +105,25 @@ export default class EditUtils {
                     store.dispatch(selectLayer(action.layerIndex));
                     break;
                 case DRAW:
-                    let tile = store.getState().board.collection.getLayer(action.layerIndex)
-                        .getTile(action.x, action.y).clone();
-                    if (!EditUtils.undo[EditUtils.undo.length - 1] ||
-                        EditUtils.undo[EditUtils.undo.length - 1].type !== DRAW) {
-                        EditUtils.layerActions.push(setTile(action.tile, action.x, action.y,
-                                                            action.layerIndex, action.bucketFill) as Action);
-                        store.dispatch(EditUtils.layerActions);
-                        EditUtils.layerActions = [];
+                    if (action.bucketFill) {
+                        let clonedLayer = drawingBoardState.collection.getLayer(action.layerIndex).clone();
+                        store.dispatch(setLayer(action.layerIndex, action.layer as TileLayer));
+                        action.layer = clonedLayer;
                     } else {
-                        EditUtils.layerActions.push(setTile(action.tile, action.x, action.y,
-                                                            action.layerIndex, action.bucketFill) as Action);
+                        let tile = drawingBoardState.collection.getLayer(action.layerIndex)
+                            .getTile(action.x, action.y).clone();
+                        if (!EditUtils.undo[EditUtils.undo.length - 1] ||
+                            EditUtils.undo[EditUtils.undo.length - 1].type !== DRAW) {
+                            EditUtils.layerActions.push(setTile(action.tile, action.x, action.y,
+                                                                action.layerIndex, action.bucketFill) as Action);
+                            store.dispatch(EditUtils.layerActions);
+                            EditUtils.layerActions = [];
+                        } else {
+                            EditUtils.layerActions.push(setTile(action.tile, action.x, action.y,
+                                                                action.layerIndex, action.bucketFill) as Action);
+                        }
+                        action.tile = tile;
                     }
-                    action.tile = tile;
                     break;
                 case DRAW_START:
                     break;
@@ -128,12 +136,15 @@ export default class EditUtils {
                 (EditUtils.undo[EditUtils.undo.length - 1].type === DRAW ||
                 EditUtils.undo[EditUtils.undo.length - 1].type === DRAW_START)) {
                 EditUtils.undoAction();
+            } else if (action.type === DRAW_START) {
+                store.dispatch(overrideTileLayerCollection(drawingBoardState.collection.clone()));
             }
         }
     }
 
     public static redoAction(): void {
         let action = EditUtils.redo.splice(EditUtils.redo.length - 1, 1)[0];
+        let drawingBoardState = store.getState().boardStore.boards[ConfigurationUtils.DrawingBoardId];
         if (action) {
             switch (action.type) {
                 case ADD_LAYER:
@@ -141,12 +152,12 @@ export default class EditUtils {
                     action.layer = null;
                     break;
                 case REMOVE_LAYER:
-                    let layer = store.getState().board.collection.getLayer(action.layerIndex);
+                    let layer = drawingBoardState.collection.getLayer(action.layerIndex);
                     store.dispatch(removeLayer(action.layerIndex));
                     action.layer = layer;
                     break;
                 case SET_LAYER:
-                    layer = store.getState().board.collection.getLayer(action.layerIndex);
+                    layer = drawingBoardState.collection.getLayer(action.layerIndex);
                     store.dispatch(setLayer(action.layerIndex, action.layer as TileLayer));
                     action.layer = layer;
                     break;
@@ -158,8 +169,8 @@ export default class EditUtils {
                     store.dispatch(moveLayer(action.layerIndex, action.layerIndexDest));
                     break;
                 case CHANGE_SIZE:
-                    let layerWidth = store.getState().board.collection.getLayerWidth();
-                    let layerHeight = store.getState().board.collection.getLayerHeight();
+                    let layerWidth = drawingBoardState.collection.getLayerWidth();
+                    let layerHeight = drawingBoardState.collection.getLayerHeight();
                     EditUtils.layerActions.push(setWidth(action.layerWidth) as Action);
                     EditUtils.layerActions.push(setHeight(action.layerHeight) as Action);
                     store.dispatch(EditUtils.layerActions);
@@ -174,19 +185,25 @@ export default class EditUtils {
                     store.dispatch(selectLayer(action.layerIndexDest));
                     break;
                 case DRAW:
-                    let tile = store.getState().board.collection.getLayer(action.layerIndex)
-                        .getTile(action.x, action.y).clone();
-                    if (!EditUtils.redo[EditUtils.undo.length - 1] ||
-                        EditUtils.redo[EditUtils.undo.length - 1].type !== DRAW) {
-                        EditUtils.layerActions.push(setTile(action.tile, action.x, action.y,
-                                                            action.layerIndex, action.bucketFill) as Action);
-                        store.dispatch(EditUtils.layerActions);
-                        EditUtils.layerActions = [];
+                    if (action.bucketFill) {
+                        let clonedLayer = drawingBoardState.collection.getLayer(action.layerIndex).clone();
+                        store.dispatch(setLayer(action.layerIndex, action.layer as TileLayer));
+                        action.layer = clonedLayer;
                     } else {
-                        EditUtils.layerActions.push(setTile(action.tile, action.x, action.y,
-                                                            action.layerIndex, action.bucketFill) as Action);
+                        let tile = drawingBoardState.collection.getLayer(action.layerIndex)
+                            .getTile(action.x, action.y).clone();
+                        if (!EditUtils.redo[EditUtils.undo.length - 1] ||
+                            EditUtils.redo[EditUtils.undo.length - 1].type !== DRAW) {
+                            EditUtils.layerActions.push(setTile(action.tile, action.x, action.y,
+                                                                action.layerIndex, action.bucketFill) as Action);
+                            store.dispatch(EditUtils.layerActions);
+                            EditUtils.layerActions = [];
+                        } else {
+                            EditUtils.layerActions.push(setTile(action.tile, action.x, action.y,
+                                                                action.layerIndex, action.bucketFill) as Action);
+                        }
+                        action.tile = tile;
                     }
-                    action.tile = tile;
                     break;
                 case DRAW_START:
                     break;
@@ -199,6 +216,8 @@ export default class EditUtils {
                 EditUtils.redo[EditUtils.redo.length - 1].type === DRAW) ||
                 action.type === DRAW_START) {
                 EditUtils.redoAction();
+            } else if (action.type === DRAW) {
+                store.dispatch(overrideTileLayerCollection(drawingBoardState.collection.clone()));
             }
         }
     }

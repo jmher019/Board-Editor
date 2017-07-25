@@ -7,11 +7,11 @@ import TileSetPanel from './components/widget/tile-set-panel';
 import LayersPanel from './components/widget/layers-panel';
 import { store, Store, areLayersVisible } from './stores/store';
 import { ButtonToolbar, ButtonGroup, Button, Glyphicon } from 'react-bootstrap';
-import { toggleGrid, ToggleAction, setDrawingTile, toggleErase, togglePicker,
-  toggleBucketFill } from './stores/board.store';
+import { toggleGrid, toggleErase, togglePicker,
+  toggleBucketFill, 
+  BoardStateAction} from './stores/board.store';
 import SaveSessionModal from './components/modal/save-session-modal';
 import LoadSessionModal from './components/modal/load-session-modal';
-import Tile from './board-editor-modules/layer/image-tile';
 import DOMUtils from './utils/dom-utils';
 import EditUtils from './utils/undo-redo-utils';
 
@@ -47,19 +47,20 @@ interface StateProps {
 }
 
 interface DispatchProps {
-  toggleGrid: (toggle: boolean) => ToggleAction;
-  toggleErase: (toggle: boolean) => ToggleAction;
-  toggleBucketFill: (toggle: boolean) => ToggleAction;
-  togglePicker: (toggle: boolean) => ToggleAction;
+  toggleGrid: (toggle: boolean) => BoardStateAction;
+  toggleErase: (toggle: boolean) => BoardStateAction;
+  toggleBucketFill: (toggle: boolean) => BoardStateAction;
+  togglePicker: (toggle: boolean) => BoardStateAction;
 }
 
 const mapStateToProps = (state: Store) => {
+  let drawingBoardState = state.boardStore.boards[ConfigurationUtils.DrawingBoardId];
   return {
-    gridEnabled: state.board.gridEnabled,
+    gridEnabled: drawingBoardState.gridEnabled,
     visibleLayers: areLayersVisible(state),
-    eraseEnabled: state.board.eraseEnabled,
-    bucketFillEnabled: state.board.bucketFillEnabled,
-    pickerEnabled: state.board.pickerEnabled
+    eraseEnabled: drawingBoardState.eraseEnabled,
+    bucketFillEnabled: drawingBoardState.bucketFillEnabled,
+    pickerEnabled: drawingBoardState.pickerEnabled
   };
 };
 
@@ -103,8 +104,8 @@ class App extends React.Component<StateProps & DispatchProps, State> {
         <div className={'row'}>
           <div className={'col-xs-2 col-sm-2 col-md-2 col-lg-2'}>
             <TileSetPanel
-              imageMap={store.getState().board.imageMap}
-              drawingTile={store.getState().board.drawingTile}
+              imageMap={store.getState().boardStore.imageMap}
+              drawingTile={store.getState().boardStore.drawingTile}
             />
           </div>
           <div className={'col-xs-8 col-sm-8 col-md-8 col-lg-8'}>
@@ -123,21 +124,21 @@ class App extends React.Component<StateProps & DispatchProps, State> {
             >
               <Board
                 isHighlighting={true}
-                collection={store.getState().board.collection}
-                imageMap={store.getState().board.imageMap}
-                drawingTile={store.getState().board.drawingTile}
+                collection={store.getState().boardStore.boards[ConfigurationUtils.DrawingBoardId].collection}
+                imageMap={store.getState().boardStore.imageMap}
+                drawingTile={store.getState().boardStore.drawingTile}
                 gridEnabled={this.props.gridEnabled}
                 visibleLayers={this.props.visibleLayers}
-                currentLayer={store.getState().board.selectedLayer}
+                currentLayer={store.getState().boardStore.boards[ConfigurationUtils.DrawingBoardId].selectedLayer}
                 bucketFill={this.props.bucketFillEnabled}
                 isSelecting={this.props.pickerEnabled}
-                onCurrentTileUpdate={(t: Tile) => { store.dispatch(setDrawingTile(t)); }}
+                id={'main board'}
               />
             </div>
           </div>
           <div className={'col-xs-2 col-sm-2 col-md-2 col-lg-2'}>
             <LayersPanel
-              tileLayerCollection={store.getState().board.collection}
+              tileLayerCollection={store.getState().boardStore.boards[ConfigurationUtils.DrawingBoardId].collection}
             />
           </div>
         </div>
@@ -219,8 +220,8 @@ class App extends React.Component<StateProps & DispatchProps, State> {
           shouldClose={() => { return true; }}
           onHide={() => { this.setState({displaySaveBoard: false}); }}
           title={'Save Board'}
-          collection={store.getState().board.collection}
-          imageMap={store.getState().board.imageMap}
+          collection={store.getState().boardStore.boards[ConfigurationUtils.DrawingBoardId].collection}
+          imageMap={store.getState().boardStore.imageMap}
         />
         <LoadSessionModal
           display={this.state.displayLoadBoard}
