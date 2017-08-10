@@ -1,6 +1,6 @@
 import './tile-set-panel.css';
 import * as React from 'react';
-import Board from '../canvas/board';
+import DrawingBoard, { DrawingBoardMode } from '../canvas/drawing-board';
 import { Form } from 'react-bootstrap';
 import SelectItem from '../select/select-item';
 import FileItem from '../button/file-button';
@@ -21,7 +21,7 @@ interface Props {
 }
 
 export default class TileSetPanel extends React.Component<Props, State> {
-    private board: Board | null;
+    private board: DrawingBoard | null;
 
     constructor(props: Props) {
         super(props);
@@ -54,27 +54,26 @@ export default class TileSetPanel extends React.Component<Props, State> {
                 <div className={'row'}>
                     <div className={'col-xs-12 col-sm-12 col-md-3 col-lg-3'}>
                         <div className={'tile-set-preview'} >
-                            <Board
-                                isSelecting={true}
-                                isHighlighting={false}
+                            <DrawingBoard
+                                mode={DrawingBoardMode.SELECTING_TILE}
+                                highlightTiles={false}
                                 collection={
                                     store.getState().boardStore.boards[ConfigurationUtils.TilePreviewBoardId]
                                         .collection
                                 }
                                 imageMap={store.getState().boardStore.imageMap}
                                 gridEnabled={true}
-                                currentLayer={0}
-                                id={'selected tile board'}
+                                drawingLayerIndex={0}
                             />
                         </div>
                     </div>
                     <div className={'col-xs-12 col-sm-12 col-md-9 col-lg-9'}>
                         <div className={'tile-set-board'}>
-                            <Board
+                            <DrawingBoard
                                 ref={board => { this.board = board; }}
-                                isSelecting={true}
-                                isHighlighting={true}
-                                onCurrentTileUpdate={(t: Tile) => {
+                                mode={DrawingBoardMode.SELECTING_TILE}
+                                highlightTiles={true}
+                                onTileSelect={(t: Tile) => {
                                     this.updateTile(t);
                                 }}
                                 collection={
@@ -82,8 +81,7 @@ export default class TileSetPanel extends React.Component<Props, State> {
                                 }
                                 imageMap={store.getState().boardStore.imageMap}
                                 gridEnabled={true}
-                                currentLayer={0}
-                                id={'tile set board'}
+                                drawingLayerIndex={0}
                             />
                         </div>
                     </div>

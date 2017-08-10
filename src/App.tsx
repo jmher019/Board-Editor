@@ -1,6 +1,5 @@
 import * as React from 'react';
 import BoardToolbar from './components/toolbar/board-toolbar';
-import Board from './components/canvas/board';
 import BoardSizeModal from './components/modal/board-size-modal';
 import ConfigurationUtils from './utils/configuration-utils';
 import TileSetPanel from './components/widget/tile-set-panel';
@@ -9,11 +8,14 @@ import { store, Store, areLayersVisible } from './stores/store';
 import { ButtonToolbar, ButtonGroup, Button, Glyphicon } from 'react-bootstrap';
 import { toggleGrid, toggleErase, togglePicker,
   toggleBucketFill, 
-  BoardStateAction} from './stores/board.store';
+  BoardStateAction,
+  setDrawingTile} from './stores/board.store';
 import SaveSessionModal from './components/modal/save-session-modal';
 import LoadSessionModal from './components/modal/load-session-modal';
 import DOMUtils from './utils/dom-utils';
 import EditUtils from './utils/undo-redo-utils';
+import DrawingBoard, { DrawingBoardMode } from './components/canvas/drawing-board';
+import Tile from './board-editor-modules/layer/image-tile';
 
 const { connect } = require('react-redux');
 
@@ -36,6 +38,7 @@ interface State {
   displayBoardSize: boolean;
   displaySaveBoard: boolean;
   displayLoadBoard: boolean;
+  mode: DrawingBoardMode;
 }
 
 interface StateProps {
@@ -85,7 +88,8 @@ class App extends React.Component<StateProps & DispatchProps, State> {
       brdLayerWidth: 0,
       brdLayerHeight: 0,
       displaySaveBoard: false,
-      displayLoadBoard: false
+      displayLoadBoard: false,
+      mode: DrawingBoardMode.DRAWING
     } as State;
   }
 
@@ -122,17 +126,18 @@ class App extends React.Component<StateProps & DispatchProps, State> {
                 background: 'rgb(45, 45, 45)'
               }}
             >
-              <Board
-                isHighlighting={true}
+              <DrawingBoard
+                mode={this.state.mode}
+                highlightTiles={true}
                 collection={store.getState().boardStore.boards[ConfigurationUtils.DrawingBoardId].collection}
                 imageMap={store.getState().boardStore.imageMap}
                 drawingTile={store.getState().boardStore.drawingTile}
                 gridEnabled={this.props.gridEnabled}
                 visibleLayers={this.props.visibleLayers}
-                currentLayer={store.getState().boardStore.boards[ConfigurationUtils.DrawingBoardId].selectedLayer}
-                bucketFill={this.props.bucketFillEnabled}
-                isSelecting={this.props.pickerEnabled}
-                id={'main board'}
+                drawingLayerIndex={store.getState().boardStore.boards[ConfigurationUtils.DrawingBoardId].selectedLayer}
+                onTileSelect={(t: Tile) => {
+                  store.dispatch(setDrawingTile(t));
+                }}
               />
             </div>
           </div>
@@ -174,6 +179,11 @@ class App extends React.Component<StateProps & DispatchProps, State> {
                   onClick={() => {
                     this.props.toggleErase(false);
                     this.props.togglePicker(false);
+                    if (!this.props.bucketFillEnabled) {
+                      this.setState({mode: DrawingBoardMode.DRAWING_BUCKET_FILL} as State);
+                    } else {
+                      this.setState({mode: DrawingBoardMode.DRAWING} as State);
+                    }
                     this.props.toggleBucketFill(!this.props.bucketFillEnabled);
                   }}
                   bsStyle={this.props.bucketFillEnabled ? 'success' : 'default'}
@@ -183,6 +193,11 @@ class App extends React.Component<StateProps & DispatchProps, State> {
                 <Button
                   onClick={() => {
                     this.props.toggleErase(false);
+                    if (!this.props.pickerEnabled) {
+                      this.setState({mode: DrawingBoardMode.SELECTING_TILE} as State);
+                    } else {
+                      this.setState({mode: DrawingBoardMode.DRAWING} as State);
+                    }
                     this.props.togglePicker(!this.props.pickerEnabled);
                     this.props.toggleBucketFill(false);
                   }}
@@ -192,6 +207,11 @@ class App extends React.Component<StateProps & DispatchProps, State> {
                 </Button>
                 <Button
                   onClick={() => {
+                    if (!this.props.eraseEnabled) {
+                      this.setState({mode: DrawingBoardMode.DRAWING_ERASING} as State);
+                    } else {
+                      this.setState({mode: DrawingBoardMode.DRAWING} as State);
+                    }
                     this.props.toggleErase(!this.props.eraseEnabled);
                     this.props.togglePicker(false);
                     this.props.toggleBucketFill(false);

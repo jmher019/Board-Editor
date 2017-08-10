@@ -1,12 +1,12 @@
 import * as React from 'react';
 
 interface State {
-    update: boolean;
 }
 
 interface Props {
     width: number;
     height: number;
+    idKey: number;
     x?: number;
     y?: number;
     onClick?: (e: React.MouseEvent<HTMLCanvasElement>) => void;
@@ -76,16 +76,7 @@ export default class Canvas extends React.Component<Props, State> {
         return this.canvas;
     }
 
-    public draw(f: () => void) {
-        if (f) {
-            f();
-            this.update();
-        }
-    }
-
-    private update(): void {
-        this.setState({update: true}, () => {
-            this.setState({update: false});
-        });
+    public refresh(): void {
+        this.setState({});
     }
 }

@@ -274,103 +274,120 @@ export let boardStore = (state = boardStoreInitialState, action: Action): BoardS
     let drawingBoardState = state.boards[ConfigurationUtils.DrawingBoardId];
     let previewBoardState = state.boards[ConfigurationUtils.TilePreviewBoardId];
     let tilesetViewerBoardState = state.boards[ConfigurationUtils.TilesetViewerId];
+    let collection: TileLayerCollection;
     switch (action.type) {
         case ADD_LAYER:
-            drawingBoardState.collection.addLayer();
-            break;
+          collection = drawingBoardState.collection.clone();
+          collection.addLayer();
+          drawingBoardState.collection = collection;
+          break;
         case REMOVE_LAYER:
-            drawingBoardState.collection.removeLayer(action.index);
-            break;
+          collection = drawingBoardState.collection.clone();
+          collection.removeLayer(action.index);
+          drawingBoardState.collection = collection;
+          break;
         case SET_LAYER:
-            drawingBoardState.collection.setLayer(action.index, action.layer);
-            break;
+          collection = drawingBoardState.collection.clone();
+          collection.setLayer(action.index, action.layer);
+          drawingBoardState.collection = collection;
+          break;
         case INSERT_LAYER:
-            drawingBoardState.collection.insertLayer(action.index, action.layer);
-            break;
+          collection = drawingBoardState.collection.clone();
+          collection.insertLayer(action.index, action.layer);
+          drawingBoardState.collection = collection;
+          break;
         case MOVE_LAYER:
-            drawingBoardState.collection.moveLayer(action.indexStart, action.indexDest);
-            break;
+          collection = drawingBoardState.collection.clone();
+          collection.moveLayer(action.indexStart, action.indexDest);
+          drawingBoardState.collection = collection;
+          break;
         case SET_WIDTH:
-            drawingBoardState.collection.setLayerWidth(action.width);
-            break;
+          collection = drawingBoardState.collection.clone();
+          collection.setLayerWidth(action.width);
+          drawingBoardState.collection = collection;
+          break;
         case SET_HEIGHT:
-            drawingBoardState.collection.setLayerHeight(action.height);
-            break;
+          collection = drawingBoardState.collection.clone();
+          collection.setLayerHeight(action.height);
+          drawingBoardState.collection = collection;
+          break;
         case TOGGLE_VISIBILITY:
-            drawingBoardState.collection.toggleLayerVisibility(action.index);
-            break;
+          collection = drawingBoardState.collection.clone();
+          collection.toggleLayerVisibility(action.index);
+          drawingBoardState.collection = collection;
+          break;
         case PUT_IMAGE:
-            state.imageMap.put(action.key, action.img);
-            break;
+          state.imageMap.put(action.key, action.img);
+          break;
         case SET_DRAWING_TILE:
-            state.drawingTile.setImageSrc(action.tile.getImageSrc());
-            state.drawingTile.setTileX(action.tile.getTileX());
-            state.drawingTile.setTileY(action.tile.getTileY());
-            state.drawingTile.setPixelWidth(action.tile.getPixelWidth());
-            state.drawingTile.setPixelHeight(action.tile.getPixelHeight());
-            let collection = previewBoardState.collection.clone();
-            collection.getLayer(0).setTile(0, 0, state.drawingTile);
-            previewBoardState.collection = collection;
-            break;
+          state.drawingTile.setImageSrc(action.tile.getImageSrc());
+          state.drawingTile.setTileX(action.tile.getTileX());
+          state.drawingTile.setTileY(action.tile.getTileY());
+          state.drawingTile.setPixelWidth(action.tile.getPixelWidth());
+          state.drawingTile.setPixelHeight(action.tile.getPixelHeight());
+          collection = previewBoardState.collection.clone();
+          collection.getLayer(0).setTile(0, 0, state.drawingTile);
+          previewBoardState.collection = collection;
+          break;
         case TOGGLE_GRID:
-            drawingBoardState.gridEnabled = action.toggleGrid;
-            break;
+          drawingBoardState.gridEnabled = action.toggleGrid;
+          break;
         case TOGGLE_ERASE:
-            drawingBoardState.eraseEnabled = action.toggleErase;
-            if (drawingBoardState.eraseEnabled) {
-                state.drawingTile.setImageSrc('')
-                    .setTileX(0)
-                    .setTileY(0);
-                let newCollection = previewBoardState.collection.clone();
-                newCollection.getLayer(0).setTile(0, 0, state.drawingTile);
-                previewBoardState.collection = newCollection;
-            }
-            break;
+          drawingBoardState.eraseEnabled = action.toggleErase;
+          if (drawingBoardState.eraseEnabled) {
+              state.drawingTile.setImageSrc('')
+                  .setTileX(0)
+                  .setTileY(0);
+              let newCollection = previewBoardState.collection.clone();
+              newCollection.getLayer(0).setTile(0, 0, state.drawingTile);
+              previewBoardState.collection = newCollection;
+          }
+          break;
         case TOGGLE_PICKER:
-            drawingBoardState.pickerEnabled = action.togglePicker;
-            break;
+          drawingBoardState.pickerEnabled = action.togglePicker;
+          break;
         case TOGGLE_BUCKET_FILL:
-            drawingBoardState.bucketFillEnabled = action.toggleBucketFill;
-            break;
+          drawingBoardState.bucketFillEnabled = action.toggleBucketFill;
+          break;
         case SELECT_LAYER:
-            drawingBoardState.selectedLayer = action.index;
-            break;
+          drawingBoardState.selectedLayer = action.index;
+          break;
         case OVERRIDE_TILE_LAYER_COLLECTION:
-            drawingBoardState.collection = action.collection;
-            break;
+          drawingBoardState.collection = action.collection;
+          break;
         case SET_TILE:
-            drawingBoardState.collection.getLayer(action.index)
-                .setTile(action.x, action.y, action.tile, action.bucketFill);
-            break;
+          drawingBoardState.collection.getLayer(action.index)
+              .setTile(action.x, action.y, action.tile, action.bucketFill);
+          break;
         case SET_CURRENT_TILESET:
-            let img = state.imageMap.get(action.currentImage);
-            if (img) {
-                let tilesetCollection = tilesetViewerBoardState.collection.clone();
-                let width = img.width;
-                let height = img.height;
-                let tileWidth = tilesetCollection.getTilePixelWidth();
-                let tileHeight = tilesetCollection.getTilePixelHeight();
-                let numTiles = floor(width * height / (tileWidth * tileHeight));
-                let newCollectionHeight = ceil(numTiles / 4);
+          let img = state.imageMap.get(action.currentImage);
+          if (img) {
+              let tilesetCollection = tilesetViewerBoardState.collection.clone();
+              let width = img.width;
+              let height = img.height;
+              let tileWidth = tilesetCollection.getTilePixelWidth();
+              let tileHeight = tilesetCollection.getTilePixelHeight();
+              let numTiles = floor(width * height / (tileWidth * tileHeight));
+              let newCollectionHeight = ceil(numTiles / 4);
 
-                tilesetCollection.setLayerHeight(newCollectionHeight);
-                let tileStride = width / tileWidth;
-                let index = 0;
-                for (let y = 0; y < tilesetCollection.getLayerHeight(); y++) {
-                    for (let x = 0; x < tilesetCollection.getLayerWidth(); x++) {
-                        tilesetCollection.getLayer(0).setTile(x, y, new Tile({
-                            imageSrc: action.currentImage,
-                            tileCoords: new Vector(floor(index % tileStride), floor(index / tileStride)),
-                            pixelSize: new Vector(tileWidth, tileHeight)
-                        }));
-                        index++;
-                    }
-                }
-                tilesetViewerBoardState.collection = tilesetCollection;
-            }
-            break;
+              tilesetCollection.setLayerHeight(newCollectionHeight);
+              let tileStride = width / tileWidth;
+              let index = 0;
+              for (let y = 0; y < tilesetCollection.getLayerHeight(); y++) {
+                  for (let x = 0; x < tilesetCollection.getLayerWidth(); x++) {
+                      tilesetCollection.getLayer(0).setTile(x, y, new Tile({
+                          imageSrc: action.currentImage,
+                          tileCoords: new Vector(floor(index % tileStride), floor(index / tileStride)),
+                          pixelSize: new Vector(tileWidth, tileHeight)
+                      }));
+                      index++;
+                  }
+              }
+              tilesetViewerBoardState.collection = tilesetCollection;
+          }
+          break;
         default:
-            break;
+          break;
     }
 
     return state;

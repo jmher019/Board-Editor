@@ -87,14 +87,14 @@ export default class BoardSizeModal extends React.Component<ModalProps, State> {
         let heightVal = parseInt(height, 10);
         if (widthVal <= 0) {
             widthVal = 1;
-        } else if (widthVal > 150) {
-            widthVal = 150;
+        } else if (widthVal > 500) {
+            widthVal = 500;
         }
 
         if (heightVal <= 0) {
             heightVal = 1;
-        } else if (heightVal > 150) {
-            heightVal = 150;
+        } else if (heightVal > 500) {
+            heightVal = 500;
         }
 
         let actions: Action[] = [
